@@ -1,0 +1,13 @@
+[project]
+name = "halecosystem"
+version = "0.1.0"
+description = "Hal Agent Gateway: bilingual (EL/EN), broker-in-the-loop agentic layer for Ashlar Assurance"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+mcp = ["mcp>=1.2"]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
