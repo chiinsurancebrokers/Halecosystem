@@ -7,6 +7,7 @@ dependencies = []
 
 [project.optional-dependencies]
 mcp = ["mcp>=1.2"]
+signing = ["pymupdf>=1.24", "fastapi>=0.110", "uvicorn>=0.29"]
 dev = ["pytest>=8"]
 
 [tool.pytest.ini_options]

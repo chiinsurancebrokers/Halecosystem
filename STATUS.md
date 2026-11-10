@@ -16,6 +16,10 @@
 ## Consolidation (consequence of the audit)
 The same logic exists in several diverged copies (Proposal Studio vs commercial-proposal; HAL v2/v3, halrailway, hal-the-brain; 3 travel-quote Netlify sites). Every copy needs its own security fixes. Target: ONE quote engine (ashlar-hal-3), ONE proposal service, ONE portal, all behind hal_gateway; retire the rest after confirming nothing calls them.
 
+- Send-for-signature module (signing.py, signing_app.py, `request_signature` tool) with 9 tests; dry-run on a real insurer form placed the
+  signature correctly. Not deployed. Needs: persistent storage (Postgres/Supabase instead of SQLite BLOBs), notification email to the broker
+  on signing, a broker UI to pick the signature box, and insurer confirmation that e-signature is accepted on their forms.
+
 ## Next (in order)
 0. Retire or protect legacy copies (see Consolidation); confirm what calls `halinsurance.up.railway.app` first.
 1. Adapters in `hal_gateway/adapters/`: portal (Postgres, read + ticket/email queue), ashlar-hal-3 `/quotes` API, Proposal Studio prefill.

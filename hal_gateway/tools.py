@@ -32,8 +32,10 @@ class Tool:
 
 
 class Gateway:
-    def __init__(self, policies: PolicyBackend, quotes: QuoteBackend, proposals: ProposalBackend, store: ActionStore) -> None:
+    def __init__(self, policies: PolicyBackend, quotes: QuoteBackend, proposals: ProposalBackend, store: ActionStore,
+                 signing: Any = None) -> None:
         self.policies, self.quotes, self.proposals, self.store = policies, quotes, proposals, store
+        self.signing = signing  # optional SigningService; enables the staff-only request_signature tool
         self.tools: dict[str, Tool] = {}
         self._register()
         # approved write actions are executed by these handlers, and only after staff approval
@@ -94,6 +96,20 @@ class Gateway:
         def prepare_proposal(who: Principal, args: dict[str, Any], lang: Lang) -> dict[str, Any]:
             return self._propose(who, "prepare_proposal", args, {"facts": dict(args.get("facts", {}))}, lang)
 
+        def request_signature(who: Principal, args: dict[str, Any], lang: Lang) -> dict[str, Any]:
+            if self.signing is None:
+                raise NotAllowed("signing is not enabled")
+            import base64
+            cid = self._client_id(who, args)  # staff must have this client in their book
+            rect = tuple(float(v) for v in args["rect"])
+            out = self.signing.create(who, base64.b64decode(args["pdf_b64"], validate=True), title=str(args.get("title", "Document")),
+                                      signer_name=str(args["signer_name"]), page=int(args["page"]), rect=rect,  # type: ignore[arg-type]
+                                      lang=lang, ttl_days=float(args.get("ttl_days", 7)))
+            self.store._audit(who, "signature_requested", None, {"client_id": cid, "request": out["id"]})
+            return {"request_id": out["id"], "link": out["link"], "expires_at": out["expires_at"]}
+
+        self._add("request_signature", "Create a one-time signing link for a PDF (staff only).",
+                  "Δημιουργία συνδέσμου υπογραφής μίας χρήσης για PDF (μόνο προσωπικό).", STAFF_ONLY, False, request_signature)
         self._add("get_my_policies", "List the policies of the client.", "Λίστα συμβολαίων του πελάτη.", ALL, False, get_my_policies)
         self._add("quote_health_travel", "Indicative shortlist from official rate tables.", "Ενδεικτική λίστα από επίσημους πίνακες τιμών.", ALL, False, quote_health_travel)
         self._add("open_ticket", "Ask the broker for a change or help (needs broker approval).", "Αίτημα προς τον broker (απαιτεί έγκριση).", ALL, True, open_ticket)
